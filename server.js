@@ -4,7 +4,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SOURCES, fetchSource } from './lib/upstream.js';
+import { SOURCES, fetchSource, resolveApiRequest } from './lib/upstream.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -53,8 +53,8 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const p = decodeURIComponent(url.pathname);
 
-  const api = p.match(/^\/api\/(pl|espn)(\/.*)$/);
-  if (api) return proxy(res, api[1], api[2] + url.search);
+  const api = resolveApiRequest(req.url);
+  if (api) return proxy(res, api.source, api.apiPath);
   return serveFile(res, PUBLIC_DIR, p === '/' ? 'index.html' : p);
 });
 
