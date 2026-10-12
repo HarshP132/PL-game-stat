@@ -1,5 +1,5 @@
 import { StadiumScene } from './scene.js';
-import { getSeasons, getFixtures, getMatch } from './api.js';
+import { connect, getFixtures, getMatch } from './data.js';
 import { MatchSimulator, demoResults } from './demo.js';
 import { DEMO_CLUBS } from './teams.js';
 
@@ -9,6 +9,7 @@ const $ = (sel) => document.querySelector(sel);
 const state = {
   tab: 'live',
   apiOk: false,
+  sourceName: '',
   seasons: [],
   season: null,
   resultsPage: 0,
@@ -84,7 +85,7 @@ async function showTab(tab) {
 async function renderLive() {
   const tools = $('#tools');
   if (!state.apiOk) {
-    tools.innerHTML = `<p>The Premier League API isn't reachable right now, so live data is unavailable.</p>
+    tools.innerHTML = `<p>Live football data isn't reachable right now, so live scores are unavailable.</p>
       <p>Reason: ${escapeHtml(state.apiError || 'unknown')}</p>
       <button class="primary" id="simNow">▶ Watch a simulated live match</button>`;
     $('#simNow').onclick = () => showTab('demo').then(() => startSimulation());
@@ -111,7 +112,7 @@ async function renderLive() {
 async function renderResults() {
   const tools = $('#tools');
   if (!state.apiOk) {
-    tools.innerHTML = `<p>The Premier League API isn't reachable. Try the Demo tab for simulated matches.</p>
+    tools.innerHTML = `<p>Live football data isn't reachable. Try the Demo tab for simulated matches.</p>
       <p>Reason: ${escapeHtml(state.apiError || 'unknown')}</p>`;
     return;
   }
@@ -324,7 +325,7 @@ function renderDetails(m) {
 
   $('#note').textContent = m.source === 'demo'
     ? 'Simulated match: all teams, players and stats are generated.'
-    : 'Shot positions in 3D are illustrative — the Premier League feed provides shot totals, not locations. Goals, cards and subs use real minutes.';
+    : `Data: ${state.sourceName}. Shot positions in 3D are illustrative — the feed provides shot totals, not locations. Goals, cards and subs use real minutes.`;
 }
 
 function escapeHtml(s) {
@@ -338,14 +339,15 @@ window.__plStarted = true;
   state.demoMatches = demoResults();
   show(state.demoMatches[0], true);
   try {
-    state.seasons = await getSeasons();
-    if (!state.seasons.length) throw new Error('no seasons returned');
-    state.season = state.seasons[0].id;
+    const { name, seasons } = await connect();
+    state.seasons = seasons;
+    state.season = seasons[0].id;
+    state.sourceName = name;
     state.apiOk = true;
-    setSource(true, 'Premier League data');
+    setSource(true, `Live data · ${name}`);
   } catch (err) {
-    state.apiError = err.name === 'TimeoutError' ? 'no response within 15 seconds' : err.message;
-    setSource(false, 'Demo mode · PL API offline');
+    state.apiError = err.message;
+    setSource(false, 'Demo mode · live data offline');
   }
   await showTab(state.apiOk ? 'live' : 'demo');
 })();

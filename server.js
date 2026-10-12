@@ -1,10 +1,10 @@
 // Tiny zero-dependency server: serves the browser app and proxies the
-// Premier League data API (which blocks direct browser requests via CORS).
+// football data APIs (which block direct browser requests via CORS).
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { API_BASE, fetchPL } from './lib/upstream.js';
+import { SOURCES, fetchSource } from './lib/upstream.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -24,11 +24,12 @@ const MIME = {
 const cache = new Map();
 const JSON_TYPE = 'application/json; charset=utf-8';
 
-async function proxy(req, res, apiPath) {
-  const hit = cache.get(apiPath);
+async function proxy(res, source, apiPath) {
+  const key = `${source}${apiPath}`;
+  const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return send(res, 200, hit.body, JSON_TYPE);
-  const { status, body } = await fetchPL(apiPath);
-  if (status === 200) cache.set(apiPath, { at: Date.now(), body });
+  const { status, body } = await fetchSource(source, apiPath);
+  if (status === 200) cache.set(key, { at: Date.now(), body });
   send(res, status, body, JSON_TYPE);
 }
 
@@ -52,11 +53,12 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const p = decodeURIComponent(url.pathname);
 
-  if (p.startsWith('/api/pl/')) return proxy(req, res, p.slice('/api/pl'.length) + url.search);
+  const api = p.match(/^\/api\/(pl|espn)(\/.*)$/);
+  if (api) return proxy(res, api[1], api[2] + url.search);
   return serveFile(res, PUBLIC_DIR, p === '/' ? 'index.html' : p);
 });
 
 server.listen(PORT, () => {
   console.log(`PL 3D Stat Visualiser running at http://localhost:${PORT}`);
-  console.log(`Proxying Premier League data from ${API_BASE}`);
+  for (const [name, { base }] of Object.entries(SOURCES)) console.log(`  /api/${name}/* -> ${base}`);
 });

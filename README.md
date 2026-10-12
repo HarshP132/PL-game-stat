@@ -22,7 +22,12 @@ A browser-based, 3D live stat visualiser for Premier League matches, built with 
 | **Results** | Completed matches for any season, with a season picker and paging. |
 | **Demo** | An offline match simulator. Pick two clubs and kick off a simulated "live" match, or replay simulated full-time results. |
 
-Data comes from the JSON API behind premierleague.com (`footballapi.pulselive.com`). That API rejects requests made directly from a browser (CORS), so requests go through a small proxy: `api/pl.js` on Vercel, or `server.js` when running locally. If the API can't be reached, the app switches to Demo mode automatically.
+Live data comes from two unofficial public feeds, tried in this order:
+
+1. **The Premier League website's own data API** (`footballapi.pulselive.com`).
+2. **ESPN's public Premier League feed** (`site.api.espn.com`), which needs no account or key.
+
+Both feeds reject requests made directly from a browser (CORS), so requests go through a small proxy: `api/pl.js` and `api/espn.js` on Vercel, or `server.js` when running locally. The label in the top-right corner shows which feed is in use. If neither can be reached, the app switches to Demo mode and the Live tab shows the reason.
 
 > **Note:** the public feed provides shot *totals* but not shot *locations*. The 3D shot positions for real matches are illustrative. They're laid out deterministically from the match ID, so they don't change between refreshes. Goals, cards and subs use the real minutes and players.
 
@@ -51,14 +56,16 @@ Environment variables (set them in Vercel under **Settings → Environment Varia
 ## Project layout
 
 ```
-api/pl.js            Vercel serverless function: Premier League API proxy
-lib/upstream.js      the shared code that fetches from the Premier League API
+api/pl.js, espn.js   Vercel serverless functions: data proxies
+lib/upstream.js      the shared code that fetches from the data feeds
 server.js            local static server + the same proxy (no dependencies)
-vercel.json          Vercel config (output folder + /api/pl rewrite)
+vercel.json          Vercel config (output folder + /api rewrites)
 public/index.html    UI shell
 public/styles.css
 public/js/main.js    UI, tabs, live polling, simulation loop
-public/js/api.js     Premier League API client + normalisation to one match model
+public/js/data.js    picks a working data feed
+public/js/api.js     Premier League feed → shared match model
+public/js/espn.js    ESPN feed → shared match model
 public/js/demo.js    offline match simulator
 public/js/scene.js   Three.js stadium, possession, shots, timeline, towers, scoreboard
 public/js/teams.js   club colours (with kit-clash handling)

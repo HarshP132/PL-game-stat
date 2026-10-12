@@ -1,25 +1,13 @@
-// Data layer: talks to the Premier League API (through our local proxy) and
-// normalises everything into a single match model consumed by the 3D scene.
+// Premier League website data provider (through our proxy). Normalises everything
+// into the shared match model consumed by the 3D scene (see also espn.js).
 import { fixtureColors } from './teams.js';
+import { getJSON as fetchJSON } from './http.js';
 import { seededRandom } from './rng.js';
 
 const BASE = '/api/pl';
 const PL_COMPETITION_ID = 1;
 
-async function getJSON(path) {
-  const res = await fetch(BASE + path, { signal: AbortSignal.timeout(15_000) });
-  const text = await res.text();
-  if (!res.ok) {
-    let detail = '';
-    try { detail = JSON.parse(text).message || ''; } catch { detail = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120); }
-    throw new Error(`HTTP ${res.status}${detail ? ` – ${detail}` : ''}`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error('the response was not JSON (the API may have moved)');
-  }
-}
+const getJSON = (path) => fetchJSON(BASE + path);
 
 export async function getSeasons() {
   const data = await getJSON(`/competitions/${PL_COMPETITION_ID}/compseasons?page=0&pageSize=100`);
