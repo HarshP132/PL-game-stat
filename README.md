@@ -22,29 +22,39 @@ A browser-based, 3D live stat visualiser for Premier League matches, built with 
 | **Results** | Completed matches for any season, with a season picker and paging. |
 | **Demo** | An offline match simulator. Pick two clubs and kick off a simulated "live" match, or replay simulated full-time results. |
 
-Data comes from the JSON API behind premierleague.com (`footballapi.pulselive.com`). That API rejects requests made directly from a browser (CORS), so `server.js` serves the app and proxies the requests. If the API can't be reached, the app switches to Demo mode automatically.
+Data comes from the JSON API behind premierleague.com (`footballapi.pulselive.com`). That API rejects requests made directly from a browser (CORS), so requests go through a small proxy: `api/pl.js` on Vercel, or `server.js` when running locally. If the API can't be reached, the app switches to Demo mode automatically.
 
 > **Note:** the public feed provides shot *totals* but not shot *locations*. The 3D shot positions for real matches are illustrative. They're laid out deterministically from the match ID, so they don't change between refreshes. Goals, cards and subs use the real minutes and players.
 
-## Run it
+## Put it online with Vercel
 
-Requires Node.js 18+.
+1. Sign in at [vercel.com](https://vercel.com) with GitHub.
+2. Click **Add New… → Project** and **Import** this repository.
+3. Leave every setting as it is (Framework Preset: **Other**) and click **Deploy**.
+
+Vercel picks up `vercel.json` automatically. It serves the `public/` folder and runs `api/pl.js` as a serverless function for the Premier League data.
+
+## Run it on your own computer
+
+Requires Node.js 18+. There's nothing to install.
 
 ```bash
-npm install
 npm start
 # open http://localhost:3000
 ```
 
-Environment variables:
+Environment variables (set them in Vercel under **Settings → Environment Variables**):
 
-- `PORT`: the port to listen on (default `3000`).
 - `PL_API_BASE`: overrides the upstream API base if the Premier League changes its endpoint (default `https://footballapi.pulselive.com/football`).
+- `PORT`: the port the local server listens on (default `3000`).
 
 ## Project layout
 
 ```
-server.js            static server + Premier League API proxy (no dependencies)
+api/pl.js            Vercel serverless function: Premier League API proxy
+lib/upstream.js      the shared code that fetches from the Premier League API
+server.js            local static server + the same proxy (no dependencies)
+vercel.json          Vercel config (output folder + /api/pl rewrite)
 public/index.html    UI shell
 public/styles.css
 public/js/main.js    UI, tabs, live polling, simulation loop
@@ -52,6 +62,7 @@ public/js/api.js     Premier League API client + normalisation to one match mode
 public/js/demo.js    offline match simulator
 public/js/scene.js   Three.js stadium, possession, shots, timeline, towers, scoreboard
 public/js/teams.js   club colours (with kit-clash handling)
+public/vendor/three  Three.js r169 (MIT), bundled so no install step is needed
 ```
 
 This is an unofficial fan project and isn't affiliated with the Premier League.

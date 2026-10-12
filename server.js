@@ -4,12 +4,11 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { API_BASE, fetchPL } from './lib/upstream.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
-const THREE_DIR = path.join(ROOT, 'node_modules', 'three');
 const PORT = Number(process.env.PORT) || 3000;
-const API_BASE = (process.env.PL_API_BASE || 'https://footballapi.pulselive.com/football').replace(/\/$/, '');
 const CACHE_TTL_MS = 10_000;
 
 const MIME = {
@@ -23,29 +22,14 @@ const MIME = {
 };
 
 const cache = new Map();
+const JSON_TYPE = 'application/json; charset=utf-8';
 
 async function proxy(req, res, apiPath) {
-  const target = API_BASE + apiPath;
-  const hit = cache.get(target);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
-    return send(res, hit.status, hit.body, 'application/json; charset=utf-8');
-  }
-  try {
-    const upstream = await fetch(target, {
-      headers: {
-        Origin: 'https://www.premierleague.com',
-        Referer: 'https://www.premierleague.com/',
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (PL-game-stat visualiser)',
-      },
-      signal: AbortSignal.timeout(10_000),
-    });
-    const body = await upstream.text();
-    if (upstream.ok) cache.set(target, { at: Date.now(), status: upstream.status, body });
-    send(res, upstream.status, body, 'application/json; charset=utf-8');
-  } catch (err) {
-    send(res, 502, JSON.stringify({ error: 'upstream_unreachable', message: err.message }), 'application/json; charset=utf-8');
-  }
+  const hit = cache.get(apiPath);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return send(res, 200, hit.body, JSON_TYPE);
+  const { status, body } = await fetchPL(apiPath);
+  if (status === 200) cache.set(apiPath, { at: Date.now(), body });
+  send(res, status, body, JSON_TYPE);
 }
 
 async function serveFile(res, baseDir, relPath) {
@@ -69,7 +53,6 @@ const server = http.createServer((req, res) => {
   const p = decodeURIComponent(url.pathname);
 
   if (p.startsWith('/api/pl/')) return proxy(req, res, p.slice('/api/pl'.length) + url.search);
-  if (p.startsWith('/vendor/three/')) return serveFile(res, THREE_DIR, p.slice('/vendor/three/'.length));
   return serveFile(res, PUBLIC_DIR, p === '/' ? 'index.html' : p);
 });
 

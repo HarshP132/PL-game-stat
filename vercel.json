@@ -1,0 +1,4 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [{ "source": "/api/pl/:path*", "destination": "/api/pl?path=:path*" }]
+}
