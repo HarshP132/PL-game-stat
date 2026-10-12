@@ -37,7 +37,7 @@ Both feeds reject requests made directly from a browser (CORS), so requests go t
 2. Click **Add New… → Project** and **Import** this repository.
 3. Leave every setting as it is (Framework Preset: **Other**) and click **Deploy**.
 
-Vercel picks up `vercel.json` automatically. It serves the `public/` folder and runs `api/pl.js` as a serverless function for the Premier League data.
+Vercel picks up `vercel.json` automatically. It serves the `public/` folder and runs `api/pl.js` and `api/espn.js` as serverless functions for the live data.
 
 ## Run it on your own computer
 
