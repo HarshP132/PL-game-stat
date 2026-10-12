@@ -8,8 +8,17 @@ const PL_COMPETITION_ID = 1;
 
 async function getJSON(path) {
   const res = await fetch(BASE + path, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) throw new Error(`Premier League API returned ${res.status}`);
-  return res.json();
+  const text = await res.text();
+  if (!res.ok) {
+    let detail = '';
+    try { detail = JSON.parse(text).message || ''; } catch { detail = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120); }
+    throw new Error(`HTTP ${res.status}${detail ? ` – ${detail}` : ''}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('the response was not JSON (the API may have moved)');
+  }
 }
 
 export async function getSeasons() {

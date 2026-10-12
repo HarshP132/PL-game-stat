@@ -85,6 +85,7 @@ async function renderLive() {
   const tools = $('#tools');
   if (!state.apiOk) {
     tools.innerHTML = `<p>The Premier League API isn't reachable right now, so live data is unavailable.</p>
+      <p>Reason: ${escapeHtml(state.apiError || 'unknown')}</p>
       <button class="primary" id="simNow">▶ Watch a simulated live match</button>`;
     $('#simNow').onclick = () => showTab('demo').then(() => startSimulation());
     return;
@@ -110,7 +111,8 @@ async function renderLive() {
 async function renderResults() {
   const tools = $('#tools');
   if (!state.apiOk) {
-    tools.innerHTML = `<p>The Premier League API isn't reachable. Try the Demo tab for simulated matches.</p>`;
+    tools.innerHTML = `<p>The Premier League API isn't reachable. Try the Demo tab for simulated matches.</p>
+      <p>Reason: ${escapeHtml(state.apiError || 'unknown')}</p>`;
     return;
   }
   tools.innerHTML = `<select id="season" aria-label="Season">${state.seasons
@@ -341,7 +343,8 @@ window.__plStarted = true;
     state.season = state.seasons[0].id;
     state.apiOk = true;
     setSource(true, 'Premier League data');
-  } catch {
+  } catch (err) {
+    state.apiError = err.name === 'TimeoutError' ? 'no response within 15 seconds' : err.message;
     setSource(false, 'Demo mode · PL API offline');
   }
   await showTab(state.apiOk ? 'live' : 'demo');
