@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PL 3D Stat Visualiser</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <div id="stage"></div>
+
+  <header class="topbar">
+    <div class="brand">⚽ <span>PL</span> 3D Stat Visualiser</div>
+    <div class="views" role="group" aria-label="Camera">
+      <button data-view="broadcast" class="active">Broadcast</button>
+      <button data-view="top">Top-down</button>
+      <button data-view="goal">Behind goal</button>
+      <button data-view="timeline">Timeline</button>
+      <button id="orbit" aria-pressed="false">Auto-orbit</button>
+    </div>
+    <div id="source" class="pill">Connecting…</div>
+  </header>
+
+  <aside class="panel left" id="browser">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="live" class="active">Live</button>
+      <button role="tab" data-tab="results">Results</button>
+      <button role="tab" data-tab="demo">Demo</button>
+    </div>
+    <div class="tab-tools" id="tools"></div>
+    <ul class="fixtures" id="fixtures"></ul>
+  </aside>
+
+  <aside class="panel right" id="details">
+    <div class="match-head" id="matchHead"><p class="muted">Pick a match to visualise.</p></div>
+    <section>
+      <h3>Match stats</h3>
+      <div id="stats"></div>
+    </section>
+    <section>
+      <h3>Key moments</h3>
+      <ol id="events" class="events"></ol>
+    </section>
+    <p class="note" id="note"></p>
+  </aside>
+
+  <button class="panel-toggle left" data-target="browser" aria-label="Toggle match list">☰</button>
+  <button class="panel-toggle right" data-target="details" aria-label="Toggle stats">📊</button>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <div id="goal-banner" class="goal-banner" hidden>GOAL!</div>
+  <div class="legend">Hover anything in 3D · drag to orbit · scroll to zoom</div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

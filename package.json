@@ -1,0 +1,16 @@
+{
+  "name": "pl-game-stat",
+  "version": "1.0.0",
+  "description": "Live 3D stat visualiser for Premier League matches",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "three": "0.169.0"
+  }
+}

@@ -1,0 +1,57 @@
+# PL 3D Stat Visualiser
+
+A browser-based, 3D live stat visualiser for Premier League matches, built with Three.js.
+
+![Screenshot](docs/screenshot.png)
+
+## What you see
+
+- **Score:** a floating 3D scoreboard in club colours with live clock / full-time status.
+- **Possession:** a spinning 3D donut split by possession %, and each team's colour floods the pitch in proportion to its possession.
+- **Shots:** every shot is a glowing 3D arc from where it was taken to the goal. Gold arcs are goals, solid arcs were on target, faint arcs were off target. A ball flies along each new shot.
+- **Key moments:** a 3D timeline along the touchline with spinning balls for goals (with the score at that point), yellow and red cards, and substitutions. A red playhead marks the live minute.
+- **Stat towers:** side-by-side 3D bars for shots, shots on target, corners, passes, pass accuracy, fouls and cards.
+- **Goal celebrations:** confetti in the scorer's colours, a camera shake and a "GOAL!" banner when a goal arrives live.
+- **Camera presets** (Broadcast, Top-down, Behind goal, Timeline, Auto-orbit). Drag to orbit, scroll to zoom, and hover anything for details.
+
+## Data sources
+
+| Tab | Source |
+| --- | --- |
+| **Live** | Live Premier League matches, refreshed every 20s. If nothing is live, it lists upcoming fixtures. |
+| **Results** | Completed matches for any season, with a season picker and paging. |
+| **Demo** | An offline match simulator. Pick two clubs and kick off a simulated "live" match, or replay simulated full-time results. |
+
+Data comes from the JSON API behind premierleague.com (`footballapi.pulselive.com`). That API rejects requests made directly from a browser (CORS), so `server.js` serves the app and proxies the requests. If the API can't be reached, the app switches to Demo mode automatically.
+
+> **Note:** the public feed provides shot *totals* but not shot *locations*. The 3D shot positions for real matches are illustrative. They're laid out deterministically from the match ID, so they don't change between refreshes. Goals, cards and subs use the real minutes and players.
+
+## Run it
+
+Requires Node.js 18+.
+
+```bash
+npm install
+npm start
+# open http://localhost:3000
+```
+
+Environment variables:
+
+- `PORT`: the port to listen on (default `3000`).
+- `PL_API_BASE`: overrides the upstream API base if the Premier League changes its endpoint (default `https://footballapi.pulselive.com/football`).
+
+## Project layout
+
+```
+server.js            static server + Premier League API proxy (no dependencies)
+public/index.html    UI shell
+public/styles.css
+public/js/main.js    UI, tabs, live polling, simulation loop
+public/js/api.js     Premier League API client + normalisation to one match model
+public/js/demo.js    offline match simulator
+public/js/scene.js   Three.js stadium, possession, shots, timeline, towers, scoreboard
+public/js/teams.js   club colours (with kit-clash handling)
+```
+
+This is an unofficial fan project and isn't affiliated with the Premier League.
