@@ -20,15 +20,27 @@ const state = {
 };
 
 const tooltip = $('#tooltip');
-const scene = new StadiumScene($('#stage'), {
-  onHover(info) {
-    if (!info || !info.html) return (tooltip.hidden = true);
-    tooltip.hidden = false;
-    tooltip.innerHTML = info.html;
-    tooltip.style.left = `${info.x}px`;
-    tooltip.style.top = `${info.y}px`;
-  },
-});
+const scene = createScene();
+
+function createScene() {
+  try {
+    return new StadiumScene($('#stage'), {
+      onHover(info) {
+        if (!info || !info.html) return (tooltip.hidden = true);
+        tooltip.hidden = false;
+        tooltip.innerHTML = info.html;
+        tooltip.style.left = `${info.x}px`;
+        tooltip.style.top = `${info.y}px`;
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    window.__plFail?.(`<b>Your browser couldn't start 3D graphics (WebGL 2).</b> The match lists and stats still work.
+      Try Chrome or an up-to-date Safari, and make sure hardware acceleration is turned on in your browser settings.`);
+    // Stand-in so the rest of the app works without the 3D view.
+    return { setMatch() {}, setView() {}, setAutoRotate() {}, celebrate() {} };
+  }
+}
 
 // ------------------------------------------------------------------ chrome
 document.querySelectorAll('[data-view]').forEach((btn) =>
@@ -318,7 +330,11 @@ function escapeHtml(s) {
 }
 
 // ------------------------------------------------------------------ boot
+window.__plStarted = true;
 (async function boot() {
+  // Draw something straight away; the Premier League API can take a few seconds.
+  state.demoMatches = demoResults();
+  show(state.demoMatches[0], true);
   try {
     state.seasons = await getSeasons();
     if (!state.seasons.length) throw new Error('no seasons returned');
@@ -328,7 +344,5 @@ function escapeHtml(s) {
   } catch {
     setSource(false, 'Demo mode · PL API offline');
   }
-  state.demoMatches = demoResults();
-  show(state.demoMatches[0], true);
   await showTab(state.apiOk ? 'live' : 'demo');
 })();

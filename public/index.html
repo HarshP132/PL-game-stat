@@ -5,8 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PL 3D Stat Visualiser</title>
   <link rel="stylesheet" href="/styles.css" />
-  <script type="importmap">
-    { "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }
+  <script>
+    // Startup watchdog: if the app hasn't started after a few seconds, explain why on screen
+    // instead of leaving the page stuck on "Connecting…".
+    (function () {
+      function fail(html) {
+        var box = document.getElementById('boot-error');
+        box.innerHTML = html;
+        box.hidden = false;
+        var pill = document.getElementById('source');
+        pill.className = 'pill warn';
+        pill.textContent = 'Problem starting – see message';
+      }
+      window.__plFail = fail;
+      window.addEventListener('error', function (e) {
+        if (!window.__plStarted) fail('<b>The app hit an error while starting.</b><br><code>' + String(e.message || 'Unknown error').replace(/</g, '&lt;') + '</code>');
+      });
+      setTimeout(function () {
+        if (window.__plStarted) return;
+        var files = ['/js/main.js', '/js/scene.js', '/vendor/three/build/three.module.js', '/vendor/three/examples/jsm/controls/OrbitControls.js'];
+        Promise.all(files.map(function (f) {
+          return fetch(f, { cache: 'no-store' }).then(function (r) { return f + ' → ' + r.status; }, function () { return f + ' → could not load'; });
+        })).then(function (lines) {
+          fail('<b>The app didn\'t start.</b> Try a hard refresh (Ctrl+Shift+R, or Cmd+Shift+R on a Mac). If that doesn\'t help, send this to whoever set up the site:<br><code>' + lines.join('<br>') + '<br>' + navigator.userAgent + '</code>');
+        });
+      }, 8000);
+    })();
   </script>
 </head>
 <body>
@@ -50,6 +74,7 @@
   <button class="panel-toggle left" data-target="browser" aria-label="Toggle match list">☰</button>
   <button class="panel-toggle right" data-target="details" aria-label="Toggle stats">📊</button>
 
+  <div id="boot-error" class="boot-error" role="alert" hidden></div>
   <div id="tooltip" class="tooltip" hidden></div>
   <div id="goal-banner" class="goal-banner" hidden>GOAL!</div>
   <div class="legend">Hover anything in 3D · drag to orbit · scroll to zoom</div>

@@ -7,7 +7,7 @@ const BASE = '/api/pl';
 const PL_COMPETITION_ID = 1;
 
 async function getJSON(path) {
-  const res = await fetch(BASE + path);
+  const res = await fetch(BASE + path, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`Premier League API returned ${res.status}`);
   return res.json();
 }

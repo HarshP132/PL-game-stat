@@ -1,7 +1,7 @@
 // The 3D stadium: pitch, possession territory + donut, shot arcs, key-moment
 // timeline, stat towers and a floating scoreboard.
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as THREE from '../vendor/three/build/three.module.js';
+import { OrbitControls } from '../vendor/three/examples/jsm/controls/OrbitControls.js';
 
 const L = 105; // pitch length (m)
 const W = 68; // pitch width (m)
